@@ -116,3 +116,4 @@ begin
             ALUcontrol = ADD;
 
     endcase
+    endmodule
