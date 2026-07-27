@@ -31,8 +31,6 @@ wire [31:0] ALU_B;
 wire [31:0] ALU_result;
 wire [31:0] ALU_A;
 
-
-
 wire zero;
 wire beq_taken;
 wire bne_taken;
@@ -41,6 +39,7 @@ wire bge_taken;
 wire branch_taken;
 
 wire [31:0] PC_branch;
+wire [31:0] JALR_target;
 
 wire [31:0] memory_data;
 wire [31:0] write_back_data;
@@ -48,9 +47,11 @@ wire [31:0] write_back_data;
 wire [4:0] rs1;
 wire [4:0] rs2;
 wire [4:0] rd;
+
 assign ALU_A =
        (instruction[6:0] == 7'b0010111) ? PC :
        readr1;
+
 assign rs1 = instruction[19:15];
 assign rs2 = instruction[24:20];
 assign rd  = instruction[11:7];
@@ -62,15 +63,15 @@ assign write_back_data =
         (MemtoReg == 2'b01) ? memory_data :
         (MemtoReg == 2'b10) ? (PC + 32'd4) :
                               immediate;
-                            
-
-
 
 assign PC_out          = PC;
 assign instruction_out = instruction;
 assign ALU_out         = ALU_result;
 
-assign PC_branch = PC + immediate;
+assign JALR_target = (readr1 + immediate) & ~32'd1;
+
+assign PC_branch = (instruction[6:0] == 7'b1100111) ? JALR_target
+                                                    : (PC + immediate);
 
 assign PC_next =
        (branch_taken || Jump) ?
@@ -102,8 +103,7 @@ assign branch_taken =
        bne_taken ||
        blt_taken ||
        bge_taken;
-       
-       
+
 
 ProgramCounter PC_unit(
     .clk(clk),
