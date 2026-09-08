@@ -1,3 +1,25 @@
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: 
+// Engineer: 
+// 
+// Create Date: 25.06.2026 14:33:11
+// Design Name: 
+// Module Name: CPU
+// Project Name: 
+// Target Devices: 
+// Tool Versions: 
+// Description: 
+// 
+// Dependencies: 
+// 
+// Revision:
+// Revision 0.01 - File Created
+// Additional Comments:
+// 
+//////////////////////////////////////////////////////////////////////////////////
+
+
 module CPU(
     input clk,
     input reset,
@@ -31,15 +53,18 @@ wire [31:0] ALU_B;
 wire [31:0] ALU_result;
 wire [31:0] ALU_A;
 
+
+
 wire zero;
 wire beq_taken;
 wire bne_taken;
 wire blt_taken;
 wire bge_taken;
+wire bltu_taken;
+wire bgeu_taken;
 wire branch_taken;
 
 wire [31:0] PC_branch;
-wire [31:0] JALR_target;
 
 wire [31:0] memory_data;
 wire [31:0] write_back_data;
@@ -47,11 +72,9 @@ wire [31:0] write_back_data;
 wire [4:0] rs1;
 wire [4:0] rs2;
 wire [4:0] rd;
-
 assign ALU_A =
        (instruction[6:0] == 7'b0010111) ? PC :
        readr1;
-
 assign rs1 = instruction[19:15];
 assign rs2 = instruction[24:20];
 assign rd  = instruction[11:7];
@@ -63,17 +86,18 @@ assign write_back_data =
         (MemtoReg == 2'b01) ? memory_data :
         (MemtoReg == 2'b10) ? (PC + 32'd4) :
                               immediate;
+                            
+
+
 
 assign PC_out          = PC;
 assign instruction_out = instruction;
 assign ALU_out         = ALU_result;
 
-assign JALR_target = (readr1 + immediate) & ~32'd1;
-
-assign PC_branch = (instruction[6:0] == 7'b1100111) ? JALR_target
-                                                    : (PC + immediate);
+assign PC_branch = PC + immediate;
 
 assign PC_next =
+       (instruction[6:0] == 7'b1100111) ? {ALU_result[31:1], 1'b0} : // JALR
        (branch_taken || Jump) ?
        PC_branch :
        (PC + 32'd4);
@@ -98,12 +122,25 @@ assign bge_taken =
        (instruction[14:12] == 3'b101) &&
        ($signed(readr1) >= $signed(readr2));
 
+assign bltu_taken =
+       Branch &&
+       (instruction[14:12] == 3'b110) &&
+       (readr1 < readr2);
+
+assign bgeu_taken =
+       Branch &&
+       (instruction[14:12] == 3'b111) &&
+       (readr1 >= readr2);
+
 assign branch_taken =
        beq_taken ||
        bne_taken ||
        blt_taken ||
-       bge_taken;
-
+       bge_taken ||
+       bltu_taken ||
+       bgeu_taken;
+       
+       
 
 ProgramCounter PC_unit(
     .clk(clk),
@@ -166,6 +203,7 @@ DataMemory DM(
     .MemRead(MemRead),
     .MemWrite(MemWrite),
     .address(ALU_result),
+    .func3(instruction[14:12]),
     .write_data(readr2),
     .read_data(memory_data)
 );

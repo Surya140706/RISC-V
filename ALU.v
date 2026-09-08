@@ -1,3 +1,25 @@
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: IIT Kharagpur
+// Engineer: V S S Gunwanth
+// 
+// Create Date: 17.06.2026 11:33:30
+// Design Name: 
+// Module Name: ALU
+// Project Name: ALU.v
+// Target Devices: 
+// Tool Versions: 
+// Description: RISC V ALU 
+// 
+// Dependencies: 
+// 
+// Revision:
+// Revision 0.01 - File Created
+// Additional Comments:
+// 
+//////////////////////////////////////////////////////////////////////////////////
+
+
 module ALU(
 input [3:0] ALUcontrol,
 input [31:0] A,
@@ -16,6 +38,7 @@ parameter [3:0] SRL  = 4'b0110;
 parameter [3:0] SRA  = 4'b0111;
 parameter [3:0] SLT  = 4'b1000;
 parameter [3:0] SLTU = 4'b1001;
+
     
     assign zero=(ALU_result==32'b0);
     always @(*)
@@ -31,6 +54,7 @@ parameter [3:0] SLTU = 4'b1001;
     SRA:ALU_result=$signed(A)>>>B[4:0];
     SLT:ALU_result=($signed(A)<$signed(B))? 32'b1:32'b0;
     SLTU:ALU_result=(A<B)? 32'b1:32'b0;
+  
     default: ALU_result=32'b0;
     endcase
     end
